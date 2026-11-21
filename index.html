@@ -37,8 +37,7 @@
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Dark Mode Initializer to prevent flash of white screen -->
+     <!-- Dark Mode Initializer -->
     <script>
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark')
@@ -79,7 +78,6 @@
         .dark .nav-item { color: #94a3b8; opacity: 0.7; }
         .nav-item.active { color: #ff7a1a !important; opacity: 1 !important; }
         
-        /* Slide Panels adapting to Dark Mode */
         .panel { position: fixed; inset: 0; background: #f7f2ea; z-index: 50; transform: translateX(-100%); transition: transform 0.3s ease-in-out; display: flex; flex-direction: column; }
         .dark .panel { background: #0f172a; }
         .panel.open { transform: translateX(0); }
@@ -91,8 +89,9 @@
         .chart-container { position: relative; height: 110px; width: 110px; margin: 0 auto; }
         .chart-center-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
         
-        /* PDF specific styling to ensure it prints black and white/light mode strictly */
+        /* PDF specific styling to ensure it prints clean */
         #pdfContent { color: #1c2b5a !important; background: #ffffff !important; }
+        .pdf-chart-wrap { height: 150px; position: relative; }
     </style>
 </head>
 <body class="bg-primary dark:bg-slate-900 text-secondary dark:text-slate-100 font-sans antialiased overflow-x-hidden transition-colors duration-300">
@@ -101,7 +100,7 @@
     <div id="loginScreen" class="min-h-screen flex flex-col justify-center items-center p-6 z-[100] relative bg-primary dark:bg-slate-900 transition-colors duration-300">
         <div class="text-center mb-10">
             <div class="w-20 h-20 mx-auto flex items-center justify-center shadow-soft dark:shadow-soft-dark mb-6 transform rotate-3">
-                <img src="https://misse-a.github.io/kesflow/kesflow-logo.svg" alt="Logo" class="w-16 h-16">
+                <i class="fa-solid fa-money-bill-transfer text-4xl text-accent -rotate-3"></i>
             </div>
             <h1 class="text-3xl font-extrabold text-secondary dark:text-white tracking-tight">KESFlow</h1>
         </div>
@@ -111,6 +110,7 @@
                 <label class="g-label text-center w-full">Enter PIN</label>
             </div>
             <button onclick="loginWithPin()" id="loginBtn" class="w-full bg-secondary text-white font-semibold py-4 rounded-2xl shadow-lg hover:bg-opacity-90 transition mt-4">Log In</button>
+            <p id="bioAutoLoginMsg" class="hidden text-xs text-center text-accent mt-4 animate-pulse">Scanning Biometrics...</p>
             <button onclick="loginBio()" id="bioBtn" class="hidden w-full bg-primary dark:bg-slate-700 text-secondary dark:text-slate-100 font-semibold py-4 rounded-2xl shadow-sm hover:opacity-80 transition mt-4"><i class="fa-solid fa-fingerprint text-accent mr-2"></i> Use Biometrics</button>
         </div>
     </div>
@@ -122,7 +122,7 @@
         <header class="text-secondary dark:text-white fixed top-0 w-full z-40 bg-primary/90 dark:bg-slate-900/90 backdrop-blur-md flex justify-between items-center px-6 py-4 transition-colors">
             <div class="flex items-center gap-3">
                 <button onclick="openPanel('burgerMenu')" class="text-secondary dark:text-white hover:text-accent transition text-xl mr-2"><i class="fa-solid fa-bars-staggered"></i></button>
-                <img src="https://misse-a.github.io/kesflow/kesflow-logo.svg" class="w-8 h-8" alt="Logo" />
+                <i class="fa-solid fa-money-bill-transfer text-accent text-xl"></i>
                 <h1 class="font-extrabold tracking-tight text-xl">KESFlow</h1>
             </div>
             <div class="flex gap-4 items-center">
@@ -152,8 +152,8 @@
                         <h2 id="welcomeGreeting" class="text-3xl font-extrabold text-secondary dark:text-white tracking-tight">Hello, User</h2>
                         <p id="financialInsight" class="text-sm text-secondary dark:text-slate-400 opacity-80 font-semibold mt-1">Loading insights...</p>
                     </div>
-                    <button onclick="openPanel('budgetPanel')" class="bg-white dark:bg-slate-800 p-2 rounded-full shadow-sm text-secondary dark:text-slate-300 hover:text-accent transition border border-gray-100 dark:border-slate-700">
-                        <i class="fa-solid fa-sliders text-sm"></i>
+                    <button onclick="openPanel('budgetPanel')" class="bg-white dark:bg-slate-800 p-3 rounded-full shadow-sm text-secondary dark:text-slate-300 hover:text-accent transition border border-gray-100 dark:border-slate-700">
+                        <i class="fa-solid fa-sliders"></i>
                     </button>
                 </div>
 
@@ -178,32 +178,37 @@
                 </div>
 
                 <!-- Main Budget Overview Card -->
-                <div class="bg-white dark:bg-slate-800 p-6 rounded-[2rem] shadow-soft dark:shadow-soft-dark flex items-center justify-between">
-                    <div class="flex-1">
-                        <p class="text-sm text-secondary dark:text-slate-400 font-semibold mb-1">Spent</p>
-                        <h2 id="overviewSpent" class="text-3xl font-extrabold text-secondary dark:text-white tracking-tight">KES 0</h2>
-                        <p class="text-xs text-secondary dark:text-slate-400 mt-1">of <span id="overviewLimitStr" class="font-bold">KES 0</span> limit</p>
-                        <div id="overviewCompare" class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold mt-3 bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-300">No data</div>
+                <div class="bg-white dark:bg-slate-800 p-6 rounded-[2rem] shadow-soft dark:shadow-soft-dark relative">
+                    <!-- Small Income Chip at the top right -->
+                    <div class="absolute top-4 right-4 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 rounded-full text-[10px] font-bold border border-green-100 dark:border-green-800 flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-down"></i> IN: <span id="overviewIncome">0</span>
                     </div>
-                    
-                    <div class="flex flex-col items-center">
-                        <div class="chart-container mb-2">
-                            <canvas id="overviewChart"></canvas>
-                            <div class="chart-center-text">
-                                <p id="overviewPct" class="text-2xl font-extrabold text-secondary dark:text-white">0%</p>
-                                <p class="text-[9px] text-secondary dark:text-slate-400 font-semibold uppercase tracking-wider leading-tight">of limit</p>
+
+                    <div class="flex items-center justify-between mt-4">
+                        <div class="flex-1">
+                            <p class="text-sm text-secondary dark:text-slate-400 font-semibold mb-1">Spent</p>
+                            <h2 id="overviewSpent" class="text-3xl font-extrabold text-secondary dark:text-white tracking-tight">KES 0</h2>
+                            <p class="text-xs text-secondary dark:text-slate-400 mt-1">of <span id="overviewLimitStr" class="font-bold">KES 0</span> limit</p>
+                            <div id="overviewCompare" class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold mt-3 bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-300">No data</div>
+                        </div>
+                        
+                        <div class="flex flex-col items-center">
+                            <div class="chart-container mb-2">
+                                <canvas id="overviewChart"></canvas>
+                                <div class="chart-center-text">
+                                    <p id="overviewPct" class="text-2xl font-extrabold text-secondary dark:text-white">0%</p>
+                                    <p class="text-[9px] text-secondary dark:text-slate-400 font-semibold uppercase tracking-wider leading-tight">of limit</p>
+                                </div>
                             </div>
                         </div>
-                        <p class="text-xs text-secondary dark:text-slate-400 font-semibold">Remaining</p>
-                        <p id="overviewRemaining" class="text-sm font-bold text-secondary dark:text-slate-200">KES 0</p>
                     </div>
                 </div>
 
-                <!-- Budget Categories List -->
+                <!-- Budget Categories List (Top 5 Expandable) -->
                 <div class="bg-white dark:bg-slate-800 rounded-[2rem] shadow-soft dark:shadow-soft-dark p-6">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="font-bold text-secondary dark:text-white text-lg">Categories</h3>
-                        <span class="text-xs font-semibold text-secondary dark:text-slate-400">Spent / Limit</span>
+                        <button id="viewAllCatsBtn" onclick="toggleCategoriesView()" class="text-xs font-bold text-accent hover:underline">View All</button>
                     </div>
                     <div id="categoryProgressList" class="space-y-6">
                         <div class="h-10 skeleton w-full mb-4"></div><div class="h-10 skeleton w-full"></div>
@@ -242,15 +247,29 @@
                         <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-secondary dark:text-slate-400 text-sm pointer-events-none opacity-50"></i>
                     </div>
                     
-                    <div class="bg-primary dark:bg-slate-900 rounded-2xl p-4 mb-6 shadow-inner max-h-[300px] overflow-y-auto border border-gray-200 dark:border-slate-700">
+                    <div class="bg-primary dark:bg-slate-900 rounded-2xl p-4 mb-6 shadow-inner max-h-[400px] overflow-y-auto border border-gray-200 dark:border-slate-700">
                         <p class="text-xs font-bold text-secondary dark:text-slate-400 opacity-80 uppercase tracking-wider mb-2">Document Preview</p>
-                        <!-- Notice: PDF content forces light colors so it prints beautifully regardless of dark mode -->
-                        <div id="pdfContent" class="p-4 text-sm shadow-sm rounded-xl">
-                            <h1 class="text-lg font-bold mb-1" style="color: #1c2b5a;">KESFlow Report</h1>
-                            <p id="pdfDate" class="text-[10px] mb-4" style="color: #1c2b5a; opacity: 0.6;"></p>
+                        
+                        <!-- PDF Content Frame -->
+                        <div id="pdfContent" class="p-6 text-sm shadow-sm rounded-xl" style="background: white !important; color: #1c2b5a !important;">
+                            <h1 class="text-2xl font-bold mb-1" style="color: #1c2b5a;">KESFlow Report</h1>
+                            <p id="pdfDate" class="text-xs mb-6" style="color: #1c2b5a; opacity: 0.6;"></p>
+                            
+                            <!-- PDF Charts -->
+                            <div class="grid grid-cols-2 gap-4 mb-8">
+                                <div>
+                                    <p class="text-[10px] font-bold text-center uppercase tracking-wider mb-2" style="color:#1c2b5a;">Expenses by Category</p>
+                                    <div class="pdf-chart-wrap"><canvas id="pdfChartCat"></canvas></div>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-bold text-center uppercase tracking-wider mb-2" style="color:#1c2b5a;">Budget vs Actuals</p>
+                                    <div class="pdf-chart-wrap"><canvas id="pdfChartOverview"></canvas></div>
+                                </div>
+                            </div>
+
                             <table class="w-full text-left text-xs" style="color: #1c2b5a;">
                                 <thead style="border-bottom: 1px solid #e5e7eb;">
-                                    <tr><th class="py-2">Date</th><th>Category</th><th>Source</th><th class="text-right">Amount</th></tr>
+                                    <tr><th class="py-2">Date</th><th>Category</th><th>Item/Source</th><th class="text-right">Amount</th></tr>
                                 </thead>
                                 <tbody id="pdfTable"></tbody>
                             </table>
@@ -313,7 +332,7 @@
         </div>
     </div>
 
-    <!-- ENTRY SLIDE-IN PANEL -->
+    <!-- ENTRY SLIDE-IN PANEL (Smart Searchable Dropdown) -->
     <div id="entryPanel" class="panel w-full sm:w-md sm:border-r border-gray-200 dark:border-slate-700">
         <div class="bg-primary dark:bg-slate-900 text-secondary dark:text-white p-6 pt-8 flex items-center gap-4">
             <button onclick="closePanel('entryPanel')" class="hover:text-accent p-2"><i class="fa-solid fa-arrow-left text-xl"></i></button><h2 class="font-extrabold text-2xl flex-1 tracking-tight">New Entry</h2>
@@ -328,25 +347,27 @@
                 <input type="hidden" id="txType" value="Expense">
                 <div id="smartTools" class="mb-8 bg-primary dark:bg-slate-700 p-4 rounded-2xl">
                     <div class="flex justify-between items-center mb-2">
-                        <p class="text-xs font-bold text-secondary dark:text-slate-400 uppercase tracking-wider">Quick Fill</p>
+                        <p class="text-xs font-bold text-secondary dark:text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-wand-magic-sparkles text-accent mr-1"></i> Smart Fill</p>
                         <label class="cursor-pointer text-accent font-bold hover:underline text-xs"><i class="fa-solid fa-camera mr-1"></i> Scan Receipt<input type="file" id="receiptImg" accept="image/*" class="hidden" onchange="processOCR(this)"></label>
                     </div>
-                    <textarea id="smsPaste" placeholder="Paste SMS here..." class="w-full p-3 bg-white dark:bg-slate-800 rounded-xl text-sm outline-none border-none shadow-sm font-medium text-secondary dark:text-white" rows="2" oninput="parseSMS(this.value)"></textarea>
+                    <textarea id="smsPaste" placeholder="Paste SMS or Receipt here..." class="w-full p-3 bg-white dark:bg-slate-800 rounded-xl text-sm outline-none border-none shadow-sm font-medium text-secondary dark:text-white" rows="2" oninput="parseSmartText(this.value)"></textarea>
+                    <p id="ocrStatus" class="text-xs text-accent mt-1 hidden"></p>
                 </div>
                 <div class="grid grid-cols-2 gap-6">
                     <div class="g-input-wrapper"><input type="date" id="txDate" class="g-input font-bold" required placeholder=" "><label class="g-label">Date</label></div>
                     <div class="g-input-wrapper"><input type="number" id="txAmount" step="0.01" class="g-input font-extrabold text-2xl text-accent" required placeholder=" "><label class="g-label">Amount (KES)</label></div>
                 </div>
                 
+                <!-- Smart Category Input -->
                 <div class="g-input-wrapper relative z-50">
-                    <input type="text" id="txCategory" class="g-input font-bold" required placeholder=" " autocomplete="off" onfocus="openCategoryDropdown()" oninput="filterCategories()">
-                    <label class="g-label">Category</label>
+                    <input type="text" id="txCategory" class="g-input font-bold" required placeholder=" " autocomplete="off" onfocus="document.getElementById('catDrop').classList.remove('hidden'); filterCatList()" oninput="filterCatList()">
+                    <label class="g-label">Category (Type to search)</label>
                     <i class="fa-solid fa-chevron-down absolute right-0 top-1/2 transform -translate-y-1/2 text-secondary dark:text-slate-400 text-sm pointer-events-none opacity-50"></i>
                     
-                    <div id="categoryDropdownPopup" class="hidden absolute top-full left-0 w-full bg-white dark:bg-slate-700 shadow-2xl rounded-xl border border-gray-100 dark:border-slate-600 mt-1 p-2 max-h-48 overflow-y-auto">
-                        <div id="categoryDropdownList" class="space-y-1"></div>
-                    </div>
+                    <div id="catDrop" class="hidden absolute top-full left-0 w-full bg-white dark:bg-slate-700 shadow-2xl rounded-xl border border-gray-100 dark:border-slate-600 mt-1 p-2 max-h-48 overflow-y-auto"></div>
                 </div>
+
+                <div class="g-input-wrapper relative z-10"><input type="text" id="txNotes" class="g-input font-bold" placeholder=" "><label class="g-label">Item / Notes</label></div>
 
                 <div class="grid grid-cols-2 gap-6 relative z-10 mt-4">
                     <div class="g-input-wrapper">
@@ -358,7 +379,7 @@
                     </div>
                     <div id="feeWrapper" class="g-input-wrapper"><input type="number" id="txFee" step="0.01" value="0" class="g-input font-bold" placeholder=" "><label class="g-label">Tx Fee</label></div>
                 </div>
-                <div class="g-input-wrapper relative z-10"><input type="text" id="txNotes" class="g-input font-bold" placeholder=" "><label class="g-label">Notes</label></div>
+                
                 <button type="submit" id="submitBtn" class="w-full bg-secondary text-white font-bold py-4 rounded-2xl shadow-lg mt-4 hover:bg-opacity-90 transition relative z-10">Save Entry</button>
             </form>
         </div>
@@ -391,7 +412,6 @@
             
             <div class="g-input-wrapper text-left mt-4"><input type="text" id="editName" class="g-input font-bold text-xl" required placeholder=" "><label class="g-label">Display Name</label></div>
             
-            <!-- Dark Mode Toggle -->
             <div class="bg-primary dark:bg-slate-900 rounded-2xl p-5 mb-4 flex justify-between items-center text-left">
                 <div><p class="font-bold text-secondary dark:text-slate-100 text-sm">Dark Mode</p></div>
                 <button onclick="toggleDarkMode()" id="darkModeToggleBtn" class="bg-white dark:bg-slate-800 text-secondary dark:text-slate-100 font-bold text-xs px-4 py-2 rounded-full shadow-sm transition">Off</button>
@@ -408,41 +428,56 @@
     </div>
 
     <script>
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxyQHxJ3JQpcZ792FakR_JN2-ZrM6BVvBw1oX-D9ecWOUE02OhSaT-KrO-HNTayL9rkCw/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxyQHxJ3JQpcZ792FakR_JN2-ZrM6BVvBw1oX-D9ecWOUE02OhSaT-KrO-HNTayL9rkCw/exec
+';
         let currentUser = null; let globalData = { income: [], expenses: [], categories: [], messages: [], users: [], budgets: [] };
         let charts = {}; let syncInterval = null;
+        let catsExpanded = false; // For Dashboard Top 5 toggle
         
-        // Minimized brand color array for charts
         Chart.defaults.font.family = "'Inter', sans-serif"; 
         Chart.defaults.color = document.documentElement.classList.contains('dark') ? '#f8fafc' : '#1c2b5a';
         
-        const catIcons = { 'Groceries': 'fa-cart-shopping', 'Dining': 'fa-utensils', 'Transport': 'fa-bus', 'Entertainment': 'fa-ticket', 'Subscriptions': 'fa-wifi', 'Health': 'fa-notes-medical', 'Income': 'fa-wallet' };
-        // Shaded palette based strictly on Secondary and Accent
+        const catIcons = { 'Groceries': 'fa-cart-shopping', 'Dining': 'fa-utensils', 'Transport': 'fa-bus', 'Entertainment': 'fa-ticket', 'Subscriptions': 'fa-wifi', 'Health': 'fa-notes-medical', 'Income': 'fa-wallet', 'House Utilities': 'fa-house-chimney', 'Food': 'fa-burger', 'Personal Care': 'fa-spa', 'Children Expenses': 'fa-child', 'Savings & Chama': 'fa-piggy-bank', 'Giving': 'fa-hand-holding-heart', 'Miscellaneous': 'fa-tags' };
         const catColors = ['#1c2b5a', '#ff7a1a', '#394d8f', '#ff9f57', '#5f75bf', '#ffc08f'];
 
-        window.onload = () => {
-            // Init Dark Mode button text
-            if (document.documentElement.classList.contains('dark')) document.getElementById('darkModeToggleBtn').innerText = "On";
-            
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            document.getElementById('budgetSetupMonth').value = `${yyyy}-${mm}`;
+        // Extended Smart Rules Array for Input Suggestions & Receipt Parsing
+        const smartRules = [
+            { cat: 'House Utilities', item: 'Rent & Waterbill', triggers: ['bertha njeri', 'rent', 'water', 'waterbill'] },
+            { cat: 'House Utilities', item: 'Electricity', triggers: ['kplc', 'token', 'electricity', 'power'] },
+            { cat: 'House Utilities', item: 'Cooking Gas', triggers: ['agnes wanjiku', 'gas', 'cooking gas'] },
+            { cat: 'House Utilities', item: 'Subscriptions', triggers: ['netflix', 'safaricom home', 'prime', 'google one', 'wifi', 'internet', 'dstv'] },
+            { cat: 'Food', item: 'Shopping', triggers: ['carrefour', 'naivas', 'cleanshelf', 'quickmart', 'groceries', 'supermarket'] },
+            { cat: 'Food', item: 'Lunch meals', triggers: ['nairobi pickleball club', 'ynot', 'kfc', 'lunch', 'dinner', 'restaurant', 'food', 'java'] },
+            { cat: 'Children Expenses', item: 'School Fee', triggers: ['damacrest', 'school fees', 'tuition'] },
+            { cat: 'Children Expenses', item: 'School supplies', triggers: ['textbook center', 'books', 'stationery', 'uniform'] },
+            { cat: 'Children Expenses', item: 'Toys', triggers: ['toys', 'baby'] },
+            { cat: 'Transport', item: 'Uber/Bolt', triggers: ['uber', 'bolt', 'taxi', 'fare', 'matatu', 'fuel', 'petrol'] },
+            { cat: 'Entertainment', item: 'Movies', triggers: ['movies', 'movie', 'cinema', 'imax'] },
+            { cat: 'Entertainment', item: 'Sports', triggers: ['sports', 'gym', 'club'] },
+            { cat: 'Personal Care', item: 'Salon & Nails', triggers: ['salon', 'nails', 'haircut', 'barber', 'spa', 'cosmetics'] },
+            { cat: 'Savings & Chama', item: 'Chama', triggers: ['amka', 'christine', 'chama', 'contribution'] },
+            { cat: 'Savings & Chama', item: 'Joint Account', triggers: ['equity', 'savings', 'bank'] },
+            { cat: 'Savings & Chama', item: 'Payout', triggers: ['faith kanana', 'payout'] },
+            { cat: 'Giving', item: 'Family', triggers: ['florence', 'samsom', 'parent', 'parents', 'mom', 'dad', 'giving', 'tithe', 'offering', 'harambee'] }
+        ];
 
-            if (localStorage.getItem('sessionUser')) { currentUser = JSON.parse(localStorage.getItem('sessionUser')); showDashboard(); }
-            if (localStorage.getItem('bioEnabled') && window.PublicKeyCredential) { document.getElementById('bioBtn').classList.remove('hidden'); }
-            
-            document.addEventListener('click', (e) => {
-                if(!document.getElementById('txCategory').contains(e.target) && !document.getElementById('categoryDropdownPopup').contains(e.target)) {
-                    document.getElementById('categoryDropdownPopup').classList.add('hidden');
-                }
-            });
+        window.onload = () => {
+            if (document.documentElement.classList.contains('dark')) document.getElementById('darkModeToggleBtn').innerText = "On";
+            const today = new Date();
+            document.getElementById('budgetSetupMonth').value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+            if (localStorage.getItem('sessionUser')) { 
+                currentUser = JSON.parse(localStorage.getItem('sessionUser')); 
+                showDashboard(); 
+            } else if (localStorage.getItem('bioEnabled') && window.PublicKeyCredential) {
+                document.getElementById('bioBtn').classList.remove('hidden');
+                document.getElementById('bioAutoLoginMsg').classList.remove('hidden');
+                loginBio();
+            }
         };
 
-        // Dark Mode Logic
         function toggleDarkMode() {
-            const html = document.documentElement;
-            const btn = document.getElementById('darkModeToggleBtn');
+            const html = document.documentElement; const btn = document.getElementById('darkModeToggleBtn');
             if (html.classList.contains('dark')) {
                 html.classList.remove('dark'); localStorage.theme = 'light';
                 btn.innerText = "Off"; Chart.defaults.color = '#1c2b5a';
@@ -450,7 +485,7 @@
                 html.classList.add('dark'); localStorage.theme = 'dark';
                 btn.innerText = "On"; Chart.defaults.color = '#f8fafc';
             }
-            refreshDashboard(); // re-draw charts with correct background colors
+            refreshDashboard();
         }
 
         async function apiCall(payload) {
@@ -476,14 +511,14 @@
                 localStorage.setItem('bioEnabled', 'true');
                 document.getElementById('bioToggleBtn').innerText = "Enabled ✓";
                 document.getElementById('bioToggleBtn').className = "bg-secondary text-white font-bold text-xs px-4 py-2 rounded-full shadow-sm";
-            } catch (e) { alert('Setup failed or canceled.'); }
+            } catch (e) {}
         }
 
         async function loginBio() {
             try {
                 await navigator.credentials.get({ publicKey: { challenge: new Uint8Array(32), timeout: 60000, userVerification: 'required' }});
                 if(localStorage.getItem('sessionUser')){ currentUser = JSON.parse(localStorage.getItem('sessionUser')); showDashboard(); }
-            } catch (e) { alert("Biometric failed. Please use PIN."); }
+            } catch (e) { document.getElementById('bioAutoLoginMsg').classList.add('hidden'); }
         }
 
         function logout() {
@@ -493,6 +528,7 @@
             document.getElementById('appWrapper').classList.add('hidden');
             document.getElementById('loginScreen').classList.remove('hidden'); 
             document.getElementById('pinInput').value = '';
+            document.getElementById('bioAutoLoginMsg').classList.add('hidden'); 
         }
 
         function switchView(viewName) {
@@ -513,6 +549,7 @@
             if(id === 'budgetPanel') { populateBudgetInputs(); }
             if(id === 'chatPanel') { 
                 document.getElementById('headerMsgBadge').classList.add('hidden'); document.getElementById('navMsgBadge').classList.add('hidden');
+                // Immediate Local Reset for Notifications
                 globalData.messages.forEach(m => { if(String(m.FromUserID).trim() !== String(currentUser.userId).trim()) m.ReadStatus = true; });
                 renderMessages(true); 
                 apiCall({ action: 'markMessagesRead', userId: currentUser.userId }); 
@@ -574,7 +611,6 @@
             return { start, end };
         }
 
-        // --- SHARED BUDGET LOGIC ---
         function getUserBudget(category, targetMonthStr) {
             if(!globalData.budgets) return 0;
             const b = globalData.budgets.find(b => String(b.UserID).trim() === "TEAM" && String(b.Category).trim() === String(category).trim() && String(b.Month).trim() === String(targetMonthStr).trim());
@@ -603,19 +639,22 @@
         async function saveBudgets() {
             const btn = document.getElementById('saveBudgetsBtn'); btn.innerText = "Saving...";
             const targetMonth = document.getElementById('budgetSetupMonth').value;
-            
-            let payloads = [];
-            payloads.push({ category: 'OVERALL', limit: document.getElementById('budgetLimit_OVERALL').value });
-            
-            document.querySelectorAll('.budget-cat-input').forEach(input => {
-                payloads.push({ category: input.dataset.cat, limit: input.value });
-            });
-
+            let payloads = [{ category: 'OVERALL', limit: document.getElementById('budgetLimit_OVERALL').value }];
+            document.querySelectorAll('.budget-cat-input').forEach(input => { payloads.push({ category: input.dataset.cat, limit: input.value }); });
             try {
                 await apiCall({ action: 'setBudgets', userId: currentUser.userId, month: targetMonth, budgets: payloads });
                 closePanel('budgetPanel'); fetchData();
             } catch(e) { alert("Failed to save budgets."); }
             btn.innerText = "Save Budgets";
+        }
+
+        // Toggle Top 5 vs All Categories on Dashboard
+        function toggleCategoriesView() {
+            catsExpanded = !catsExpanded;
+            document.querySelectorAll('.hidden-cat').forEach(el => {
+                if(catsExpanded) el.classList.remove('hidden'); else el.classList.add('hidden');
+            });
+            document.getElementById('viewAllCatsBtn').innerText = catsExpanded ? 'Show Less' : 'View All';
         }
 
         function refreshDashboard() {
@@ -652,8 +691,8 @@
             
             document.getElementById('overviewSpent').innerText = `KES ${tExp.toLocaleString()}`;
             document.getElementById('overviewLimitStr').innerText = `KES ${globalLimit.toLocaleString()}`;
+            document.getElementById('overviewIncome').innerText = `KES ${tInc.toLocaleString()}`;
             
-            // Smart Financial Insight
             const insightText = document.getElementById('financialInsight');
             if(globalLimit === 0) { insightText.innerText = "Set a budget limit to track progress."; insightText.className = "text-sm text-secondary dark:text-slate-400 opacity-60 font-semibold mt-1"; }
             else {
@@ -691,15 +730,18 @@
             else {
                 let html = '';
                 sortedCats.forEach(([cat, amt], index) => {
-                    const icon = catIcons[cat] || 'fa-tag'; 
+                    const icon = catIcons[cat] || 'fa-tags'; 
                     const color = catColors[index % catColors.length];
                     const catLimit = getUserBudget(cat, activeYYYYMM);
                     
                     let limitStr = catLimit > 0 ? `KES ${catLimit.toLocaleString()}` : 'No Limit';
                     let catPct = catLimit > 0 ? Math.min((amt / catLimit * 100), 100).toFixed(0) : (tExp > 0 ? (amt / tExp * 100).toFixed(0) : 0);
                     
+                    // Top 5 Expandable Logic
+                    const isHiddenClass = (index > 4 && !catsExpanded) ? 'hidden-cat hidden' : (index > 4 ? 'hidden-cat' : '');
+
                     html += `
-                        <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-4 ${isHiddenClass}">
                             <div class="w-12 h-12 rounded-full text-white flex items-center justify-center text-lg shadow-sm" style="background-color: ${color}"><i class="fa-solid ${icon}"></i></div>
                             <div class="flex-1">
                                 <div class="flex justify-between items-end mb-1">
@@ -713,6 +755,7 @@
                         </div>`;
                 });
                 catList.innerHTML = html;
+                document.getElementById('viewAllCatsBtn').classList.toggle('hidden', sortedCats.length <= 5);
             }
 
             recent.sort((a,b) => new Date(b.Date) - new Date(a.Date));
@@ -720,9 +763,18 @@
             if(recent.length === 0) { rList.innerHTML = '<p class="text-xs text-secondary opacity-50 dark:text-slate-400">No data.</p>'; }
             else {
                 let rHtml = '';
+                // Show top 5 recent, Format: Note on top, Date/Cat below
                 recent.slice(0,5).forEach(tx => {
                     const isExp = tx.type === 'Expense'; const d = new Date(tx.Date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-                    rHtml += `<div class="flex items-center justify-between py-3 border-b border-gray-100 dark:border-slate-700 last:border-0"><div class="flex items-center gap-4"><div><p class="font-bold text-secondary dark:text-white text-sm leading-tight">${tx.Category || tx.type}</p><p class="text-[10px] text-secondary dark:text-slate-400 opacity-80 font-semibold">${d} • ${tx.PaymentSource}</p></div></div><p class="font-extrabold text-sm ${isExp ? 'text-accent dark:text-orange-400' : 'text-secondary dark:text-blue-300'}">${isExp ? '-' : '+'}KES ${tx.totalAmt.toLocaleString()}</p></div>`;
+                    rHtml += `<div class="flex items-center justify-between py-3 border-b border-gray-100 dark:border-slate-700 last:border-0">
+                                <div class="flex items-center gap-4">
+                                    <div>
+                                        <p class="font-bold text-secondary dark:text-white text-sm leading-tight">${tx.Notes ? tx.Notes : (tx.Category || tx.type)}</p>
+                                        <p class="text-[10px] text-secondary dark:text-slate-400 opacity-80 font-semibold">${d} • ${tx.Category} • ${tx.PaymentSource}</p>
+                                    </div>
+                                </div>
+                                <p class="font-extrabold text-sm ${isExp ? 'text-accent dark:text-orange-400' : 'text-secondary dark:text-blue-300'}">${isExp ? '-' : '+'}KES ${tx.totalAmt.toLocaleString()}</p>
+                              </div>`;
                 });
                 rList.innerHTML = rHtml;
             }
@@ -740,15 +792,26 @@
             if(allTx.length === 0) { list.innerHTML = '<p class="text-sm text-secondary dark:text-slate-400 opacity-50 text-center py-4">No transactions found.</p>'; return; }
 
             let html = '';
+            // Full transaction list matches Recent format: Note first
             allTx.forEach(tx => {
                 const isExp = tx.type === 'Expense'; const d = new Date(tx.Date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-                const icon = catIcons[tx.Category] || (isExp ? 'fa-tag' : 'fa-wallet');
-                html += `<div class="flex items-center justify-between py-4 border-b border-gray-100 dark:border-slate-700 last:border-0"><div class="flex items-center gap-4"><div class="w-10 h-10 rounded-full flex items-center justify-center ${isExp ? 'bg-accent/10 text-accent dark:bg-accent/30 dark:text-orange-300' : 'bg-secondary/10 text-secondary dark:bg-secondary/30 dark:text-blue-300'}"><i class="fa-solid ${icon}"></i></div><div><p class="font-bold text-secondary dark:text-white text-sm">${tx.Category || tx.type}</p><p class="text-xs text-secondary dark:text-slate-400 opacity-80 font-semibold max-w-[150px] truncate">${d} • ${tx.PaymentSource} ${tx.Notes ? '• '+tx.Notes : ''}</p></div></div><p class="font-extrabold text-sm ${isExp ? 'text-accent dark:text-orange-400' : 'text-secondary dark:text-blue-300'}">${isExp ? '-' : '+'}KES ${tx.totalAmt.toLocaleString()}</p></div>`;
+                const icon = catIcons[tx.Category] || (isExp ? 'fa-tags' : 'fa-wallet');
+                html += `<div class="flex items-center justify-between py-4 border-b border-gray-100 dark:border-slate-700 last:border-0">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center ${isExp ? 'bg-accent/10 text-accent dark:bg-accent/30 dark:text-orange-300' : 'bg-secondary/10 text-secondary dark:bg-secondary/30 dark:text-blue-300'}"><i class="fa-solid ${icon}"></i></div>
+                                <div>
+                                    <p class="font-bold text-secondary dark:text-white text-sm">${tx.Notes ? tx.Notes : (tx.Category || tx.type)}</p>
+                                    <p class="text-xs text-secondary dark:text-slate-400 opacity-80 font-semibold max-w-[150px] truncate">${d} • ${tx.Category} • ${tx.PaymentSource}</p>
+                                </div>
+                            </div>
+                            <p class="font-extrabold text-sm ${isExp ? 'text-accent dark:text-orange-400' : 'text-secondary dark:text-blue-300'}">${isExp ? '-' : '+'}KES ${tx.totalAmt.toLocaleString()}</p>
+                         </div>`;
             });
             list.innerHTML = html;
         }
 
-        // --- NEW SEARCHABLE CATEGORY DROPDOWN ---
+        // --- NEW SMART SEARCHABLE CATEGORY INPUT ---
+        let availableCats = [];
         function switchTxTab(type) {
             document.getElementById('txType').value = type; const ind = document.getElementById('tabIndicator');
             if (type === 'Income') { ind.style.transform = 'translateX(100%) scaleY(0.9) scaleX(0.95)'; document.getElementById('tabIncome').classList.remove('opacity-40'); document.getElementById('tabExpense').classList.add('opacity-40'); document.getElementById('feeWrapper').classList.add('hidden'); document.getElementById('txFee').value = 0; } 
@@ -756,47 +819,87 @@
             document.getElementById('txCategory').value = ''; buildCategoryList();
         }
         
-        let availableCats = [];
         function buildCategoryList() {
             const type = document.getElementById('txType').value;
             availableCats = globalData.categories.filter(c => c.Type === type).map(c => c.CategoryName);
         }
 
-        function openCategoryDropdown() {
-            document.getElementById('categoryDropdownPopup').classList.remove('hidden');
-            filterCategories();
-        }
-
-        function filterCategories() {
+        function filterCatList() {
             const q = document.getElementById('txCategory').value.trim().toLowerCase();
-            const list = document.getElementById('categoryDropdownList');
-            list.innerHTML = '';
+            const list = document.getElementById('catDrop'); list.innerHTML = '';
+            document.getElementById('catDrop').classList.remove('hidden');
             
-            let matched = availableCats.filter(c => c.toLowerCase().includes(q));
+            let matchedSet = new Set();
+            
+            // Direct category name matching
+            availableCats.forEach(c => {
+                if(c.toLowerCase().includes(q)) matchedSet.add(c);
+            });
+            
+            // Smart Rules mapping (e.g. typing "movie" pulls up "Entertainment")
+            if(q.length > 2) {
+                smartRules.forEach(rule => {
+                    if (rule.triggers.some(t => t.toLowerCase().includes(q) || q.includes(t.toLowerCase()))) {
+                        if(availableCats.includes(rule.cat)) matchedSet.add(rule.cat);
+                    }
+                });
+            }
+            
+            let matched = Array.from(matchedSet);
             
             if(matched.length === 0) { 
-                list.innerHTML = `<p class="text-xs text-secondary dark:text-slate-400 opacity-50 p-2 text-center">Will be saved as new category.</p>`; 
+                list.innerHTML = `<p class="text-xs text-secondary dark:text-slate-400 opacity-50 p-3 text-center">Will be saved as a new category.</p>`; 
             } else {
                 matched.forEach(c => {
                     const div = document.createElement('div');
                     div.className = "p-3 hover:bg-primary dark:hover:bg-slate-600 rounded-lg text-sm font-bold text-secondary dark:text-white cursor-pointer transition border-b border-gray-50 dark:border-slate-700 last:border-0";
                     div.innerText = c;
-                    div.onclick = () => { document.getElementById('txCategory').value = c; document.getElementById('categoryDropdownPopup').classList.add('hidden'); };
+                    div.onclick = () => { document.getElementById('txCategory').value = c; document.getElementById('catDrop').classList.add('hidden'); };
                     list.appendChild(div);
                 });
             }
         }
 
-        function parseSMS(text) {
-            const amtMatch = text.match(/Ksh\s*([\d,]+\.\d{2})/i); const feeMatch = text.match(/(?:Transaction cost|Fee).*?Ksh\s*([\d,]+\.\d{2})/i);
+        // --- SMART AI RECEIPT/SMS ENTRY TOOLS ---
+        async function processOCR(input) {
+            if (!input.files || !input.files[0]) return;
+            const status = document.getElementById('ocrStatus'); status.classList.remove('hidden'); status.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Scanning receipt...";
+            try {
+                const { data: { text } } = await Tesseract.recognize(input.files[0], 'eng');
+                parseSmartText(text);
+                status.innerText = "Scan processed!";
+            } catch(e) { status.innerText = "OCR Failed."; }
+        }
+
+        function parseSmartText(text) {
+            const lowerText = text.toLowerCase();
+            
+            // 1. Extract Amount
+            const amtMatch = text.match(/(?:Ksh|KES)?\s*([\d,]+\.\d{2})/i); 
+            const feeMatch = text.match(/(?:Transaction cost|Fee).*?([\d,]+\.\d{2})/i);
             if (amtMatch) document.getElementById('txAmount').value = parseFloat(amtMatch[1].replace(/,/g, ''));
             if (feeMatch) document.getElementById('txFee').value = parseFloat(feeMatch[1].replace(/,/g, ''));
+            
+            // 2. Smart Category & Item Mapping
+            let matchedRule = null;
+            for (let rule of smartRules) {
+                if (rule.triggers.some(t => lowerText.includes(t.toLowerCase()))) {
+                    matchedRule = rule;
+                    break;
+                }
+            }
+            if (matchedRule) {
+                document.getElementById('txCategory').value = matchedRule.cat;
+                document.getElementById('txNotes').value = matchedRule.item;
+                document.getElementById('txCategory').focus(); document.getElementById('txCategory').blur();
+            }
         }
+
         async function submitTransaction(e) {
-            e.preventDefault(); const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerHTML = 'Saving...';
+            e.preventDefault(); const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
             try {
                 const res = await apiCall({ action: 'addTransaction', userId: currentUser.userId, type: document.getElementById('txType').value, date: document.getElementById('txDate').value, amount: document.getElementById('txAmount').value, category: document.getElementById('txCategory').value, paymentSource: document.getElementById('txSource').value, transactionFee: document.getElementById('txFee').value, notes: document.getElementById('txNotes').value });
-                if (res.status === 'success') { document.getElementById('txForm').reset(); closePanel('entryPanel'); fetchData(); }
+                if (res.status === 'success') { document.getElementById('txForm').reset(); closePanel('entryPanel'); document.getElementById('ocrStatus').classList.add('hidden'); fetchData(); }
             } catch (err) { alert('Failed.'); }
             btn.disabled = false; btn.innerHTML = 'Save Entry';
         }
@@ -885,23 +988,55 @@
             btn.innerText = "Save Changes";
         }
 
-        // --- PDF PREVIEW & EXPORT ---
+        // --- PDF PREVIEW & EXPORT (WITH CHARTS) ---
         function generateReportPreview() {
             const mFilter = document.getElementById('reportMonth').value;
             const now = new Date(); let start, end;
             if (mFilter === 'thisMonth') { start = new Date(now.getFullYear(), now.getMonth(), 1); end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59); document.getElementById('pdfDate').innerText = "Period: This Month"; } 
             else { start = new Date(now.getFullYear(), now.getMonth() - 1, 1); end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59); document.getElementById('pdfDate').innerText = "Period: Last Month"; } 
 
+            const activeYYYYMM = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}`;
+            const globalLimit = getUserBudget('OVERALL', activeYYYYMM);
+
             let allTx = [];
-            globalData.income.forEach(i => { const d = new Date(i.Date); if(d >= start && d <= end) { allTx.push({...i, type: 'Income'}); }});
-            globalData.expenses.forEach(e => { const d = new Date(e.Date); if(d >= start && d <= end) { const amt = parseFloat(e.Amount) + (parseFloat(e.TransactionFee)||0); allTx.push({...e, type: 'Expense', Amount: amt}); }});
+            let catMap = {}; let tExp = 0; let tInc = 0;
+
+            globalData.income.forEach(i => { const d = new Date(i.Date); if(d >= start && d <= end) { tInc += parseFloat(i.Amount); allTx.push({...i, type: 'Income'}); }});
+            globalData.expenses.forEach(e => { 
+                const d = new Date(e.Date); 
+                if(d >= start && d <= end) { 
+                    const amt = parseFloat(e.Amount) + (parseFloat(e.TransactionFee)||0); 
+                    tExp += amt; catMap[e.Category] = (catMap[e.Category]||0) + amt;
+                    allTx.push({...e, type: 'Expense', Amount: amt}); 
+                }
+            });
             
             allTx.sort((a,b) => new Date(a.Date) - new Date(b.Date));
             let html = '';
             if(allTx.length === 0) { html = `<tr><td colspan="4" class="text-center py-4 opacity-50" style="color:#1c2b5a;">No data for this period.</td></tr>`; }
-            allTx.forEach(tx => { html += `<tr style="border-bottom: 1px solid #e5e7eb; color:#1c2b5a;"><td class="py-2 opacity-80">${new Date(tx.Date).toLocaleDateString()}</td><td class="font-bold">${tx.Category || tx.type}</td><td class="opacity-80">${tx.PaymentSource}</td><td class="text-right font-bold">${tx.type==='Expense'?'-':'+'}KES ${parseFloat(tx.Amount).toLocaleString()}</td></tr>`; });
+            allTx.forEach(tx => { html += `<tr style="border-bottom: 1px solid #e5e7eb; color:#1c2b5a;"><td class="py-2 opacity-80">${new Date(tx.Date).toLocaleDateString()}</td><td class="font-bold">${tx.Category || tx.type}</td><td class="opacity-80">${tx.Notes || tx.PaymentSource}</td><td class="text-right font-bold">${tx.type==='Expense'?'-':'+'}KES ${parseFloat(tx.Amount).toLocaleString()}</td></tr>`; });
             
             document.getElementById('pdfTable').innerHTML = html;
+
+            // Render PDF Charts (Forcing Light Mode Colors for PDF Export)
+            const chartOpts = { animation: false, plugins: { legend: { position: 'bottom', labels: { color: '#1c2b5a', boxWidth: 10, font: {size: 9} } } } };
+            
+            if(charts.pdfCat) charts.pdfCat.destroy();
+            charts.pdfCat = new Chart(document.getElementById('pdfChartCat').getContext('2d'), {
+                type: 'doughnut',
+                data: { labels: Object.keys(catMap), datasets: [{ data: Object.values(catMap), backgroundColor: catColors, borderWidth: 0 }] },
+                options: chartOpts
+            });
+
+            if(charts.pdfOverview) charts.pdfOverview.destroy();
+            charts.pdfOverview = new Chart(document.getElementById('pdfChartOverview').getContext('2d'), {
+                type: 'bar',
+                data: { 
+                    labels: ['Budget', 'Income', 'Expense'], 
+                    datasets: [{ data: [globalLimit, tInc, tExp], backgroundColor: ['#0d9488', '#10b981', '#ff7a1a'], borderRadius: 4 }] 
+                },
+                options: { animation: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: '#1c2b5a', font: {size: 8} } }, x: { ticks: { color: '#1c2b5a', font: {size: 9} }, grid: { display: false } } } }
+            });
         }
         
         function downloadPDF() {
