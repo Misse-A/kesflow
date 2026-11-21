@@ -285,7 +285,7 @@
             <button onclick="closePanel('budgetPanel')" class="hover:text-accent p-2"><i class="fa-solid fa-arrow-left text-xl"></i></button><h2 class="font-extrabold text-2xl flex-1 tracking-tight">Set Budgets</h2>
         </div>
         <div class="p-6 overflow-y-auto flex-1 bg-white dark:bg-slate-800">
-            <p class="text-sm text-secondary dark:text-slate-400 mb-4">Set limits for a specific month. These apply to everyone in the team.</p>
+            <p class="text-sm text-secondary dark:text-slate-400 mb-4">Set your monthly budget.</p>
             
             <div class="mb-6">
                 <label class="block text-xs font-bold text-secondary dark:text-slate-400 uppercase tracking-wider mb-2">Budget Month</label>
@@ -351,7 +351,7 @@
                         <i class="fa-solid fa-chevron-down absolute right-0 top-1/2 transform -translate-y-1/2 text-secondary dark:text-slate-400 text-sm pointer-events-none opacity-50"></i>
                         <label class="g-label">Source</label>
                     </div>
-                    <div id="feeWrapper" class="g-input-wrapper"><input type="number" id="txFee" step="0.01" value="0" class="g-input font-bold" placeholder=" "><label class="g-label">Tx Fee</label></div>
+                    <div id="feeWrapper" class="g-input-wrapper"><input type="number" id="txFee" step="0.01" value="0" class="g-input font-bold" placeholder=" "><label class="g-label">Transaction Fee</label></div>
                 </div>
                 <button type="submit" id="submitBtn" class="w-full bg-secondary text-white font-bold py-4 rounded-2xl shadow-lg mt-4 hover:bg-opacity-90 transition relative z-10">Save Entry</button>
             </form>
@@ -361,7 +361,7 @@
     <!-- CHAT SLIDE-IN PANEL -->
     <div id="chatPanel" class="panel w-full sm:w-md sm:border-r border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
         <div class="bg-primary dark:bg-slate-900 text-secondary dark:text-white p-6 pt-8 flex items-center gap-4 border-b border-gray-100 dark:border-slate-700">
-            <button onclick="closePanel('chatPanel')" class="hover:text-accent p-2"><i class="fa-solid fa-arrow-left text-xl"></i></button><h2 class="font-extrabold text-2xl flex-1 tracking-tight">Team Chat</h2>
+            <button onclick="closePanel('chatPanel')" class="hover:text-accent p-2"><i class="fa-solid fa-arrow-left text-xl"></i></button><h2 class="font-extrabold text-2xl flex-1 tracking-tight">Chats</h2>
         </div>
         <div id="msgList" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-primary/30 dark:bg-slate-900/50"></div>
         <div class="bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700 p-4 pb-8 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
