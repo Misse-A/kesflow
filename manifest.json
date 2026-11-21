@@ -1,0 +1,22 @@
+{
+  "name": "KES Expense Tracker",
+  "short_name": "KESTrack",
+  "description": "Multi-user Expense & Income Tracking in KES",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f7f2ea",
+  "theme_color": "#1c2b5a",
+  "icons": [
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Information_icon4.svg/192px-Information_icon4.svg.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Information_icon4.svg/512px-Information_icon4.svg.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "orientation": "portrait"
+}
