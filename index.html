@@ -136,12 +136,8 @@
                 </div>
 
                 <div class="bg-white dark:bg-slate-800 p-6 rounded-[2rem] shadow-soft dark:shadow-soft-dark relative min-h-[220px]">
-                    <div class="absolute top-4 right-4 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 rounded-full text-[10px] font-bold border border-green-100 dark:border-green-800 flex items-center gap-1">
-                        <i class="fa-solid fa-arrow-down"></i> IN: <span id="overviewIncome">0</span>
-                    </div>
-
                     <!-- Modern Skeleton Loader -->
-                    <div id="overviewSkeleton" class="flex items-center justify-between mt-8">
+                    <div id="overviewSkeleton" class="flex items-center justify-between mt-4">
                         <div class="flex-1 space-y-4">
                             <div class="h-4 skeleton w-16 rounded"></div>
                             <div class="h-8 skeleton w-32 rounded"></div>
@@ -151,23 +147,33 @@
                     </div>
 
                     <!-- Actual Spend Data -->
-                    <div id="overviewData" class="hidden flex items-center justify-between mt-4">
-                        <div class="flex-1">
-                            <p class="text-sm text-secondary dark:text-slate-400 font-semibold mb-1">Spent</p>
-                            <h2 id="overviewSpent" class="text-3xl font-extrabold text-secondary dark:text-white tracking-tight">KES 0</h2>
-                            <p class="text-xs text-secondary dark:text-slate-400 mt-1">of <span id="overviewLimitStr" class="font-bold">KES 0</span> limit</p>
-                            <div id="overviewCompare" class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold mt-3 bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-300">No data</div>
-                        </div>
-                        <div class="flex flex-col items-center">
-                            <div class="chart-container mb-2">
-                                <canvas id="overviewChart"></canvas>
-                                <div class="chart-center-text">
-                                    <p id="overviewPct" class="text-2xl font-extrabold text-secondary dark:text-white">0%</p>
-                                    <p class="text-[9px] text-secondary dark:text-slate-400 font-semibold uppercase tracking-wider leading-tight">of limit</p>
-                                </div>
+                    <div id="overviewData" class="hidden flex flex-col justify-between h-full">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <p class="text-sm text-secondary dark:text-slate-400 font-semibold mb-1">Spent</p>
+                                <h2 id="overviewSpent" class="text-3xl font-extrabold text-secondary dark:text-white tracking-tight">KES 0</h2>
+                                <p class="text-xs text-secondary dark:text-slate-400 mt-1">of <span id="overviewLimitStr" class="font-bold">KES 0</span> limit</p>
+                                <div id="overviewCompare" class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold mt-3 bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-300">No data</div>
                             </div>
-                            <p class="text-xs text-secondary dark:text-slate-400 font-semibold">Remaining</p>
-                            <p id="overviewRemaining" class="text-sm font-bold text-secondary dark:text-slate-200">KES 0</p>
+                            <div class="flex flex-col items-center mt-2">
+                                <div class="chart-container mb-2">
+                                    <canvas id="overviewChart"></canvas>
+                                    <div class="chart-center-text">
+                                        <p id="overviewPct" class="text-2xl font-extrabold text-secondary dark:text-white">0%</p>
+                                        <p class="text-[9px] text-secondary dark:text-slate-400 font-semibold uppercase tracking-wider leading-tight">of limit</p>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-secondary dark:text-slate-400 font-semibold">Remaining</p>
+                                <p id="overviewRemaining" class="text-sm font-bold text-secondary dark:text-slate-200">KES 0</p>
+                            </div>
+                        </div>
+
+                        <!-- NEW: In and Balance Row -->
+                        <div class="flex items-center gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-slate-700/50">
+                            <div class="bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1.5 rounded-full text-[10px] font-bold border border-green-100 dark:border-green-800 flex items-center gap-1">
+                                <i class="fa-solid fa-arrow-down"></i> IN: <span id="overviewIncome">0</span>
+                            </div>
+                            <p class="text-xs text-secondary dark:text-slate-300 font-semibold">Balance <span id="overviewBalance" class="font-bold ml-1 text-secondary dark:text-white">KES 0</span></p>
                         </div>
                     </div>
                 </div>
@@ -481,7 +487,6 @@
             }
         }
 
-        // --- NEW: Improved Biometrics handling for specific devices ---
         async function enableBiometrics() {
             if (!window.PublicKeyCredential) return alert("Biometrics not supported on this device/browser.");
             try {
@@ -573,7 +578,6 @@
         async function fetchData() {
             const icon = document.getElementById('menuSyncIcon'); if(icon) icon.classList.add('fa-spin');
             
-            // Show Skeleton while fetching
             document.getElementById('overviewData').classList.add('hidden');
             document.getElementById('overviewSkeleton').classList.remove('hidden');
             
@@ -632,14 +636,12 @@
             return { start, end };
         }
 
-        // --- NEW: Budget Logic Helper for YTD and Custom ---
         function calculateBudgetLimit(category, filterVal, start) {
-            if (filterVal === 'custom') return null; // Returns null for '-' display
+            if (filterVal === 'custom') return null; 
             if (!globalData.budgets) return 0;
             
             let total = 0;
             if (filterVal === 'ytd') {
-                // Sum all months for current year
                 const year = start.getFullYear();
                 for (let i = 1; i <= 12; i++) {
                     const mStr = `${year}-${String(i).padStart(2, '0')}`;
@@ -649,13 +651,12 @@
                 return total;
             }
             
-            // Default single month
             const mStr = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}`;
             const b = globalData.budgets.find(b => String(b.UserID).trim().toUpperCase() === "TEAM" && String(b.Category).trim() === String(category).trim() && String(b.Month).trim() === mStr);
             return b ? Number(b.MonthlyLimit) : 0;
         }
 
-        function getUserBudget(category, targetMonthStr) { // Used mainly for budget inputs setup
+        function getUserBudget(category, targetMonthStr) {
             if(!globalData.budgets) return 0;
             const b = globalData.budgets.find(b => String(b.UserID).trim().toUpperCase() === "TEAM" && String(b.Category).trim() === String(category).trim() && String(b.Month).trim() === String(targetMonthStr).trim());
             return b ? Number(b.MonthlyLimit) : 0;
@@ -726,12 +727,23 @@
                 recent.push({...i, type: 'Income', totalAmt: amt});
             });
 
-            // NEW: Fetch accurate budget limit for selected period (YTD sum or Null for custom)
             const globalLimit = calculateBudgetLimit('OVERALL', mFilter, current.start);
             
             document.getElementById('overviewSpent').innerText = `KES ${tExp.toLocaleString()}`;
-            document.getElementById('overviewIncome').innerText = `KES ${tInc.toLocaleString()}`;
+            document.getElementById('overviewIncome').innerText = `${tInc.toLocaleString()}`;
             
+            // --- NEW: Calculate Balance ---
+            const balanceVal = tInc - tExp;
+            const balanceEl = document.getElementById('overviewBalance');
+            balanceEl.innerText = `KES ${balanceVal.toLocaleString()}`;
+            if (balanceVal < 0) {
+                balanceEl.classList.remove('text-secondary', 'dark:text-white');
+                balanceEl.classList.add('text-red-500', 'dark:text-red-400');
+            } else {
+                balanceEl.classList.remove('text-red-500', 'dark:text-red-400');
+                balanceEl.classList.add('text-secondary', 'dark:text-white');
+            }
+
             let limitStr = globalLimit === null ? '-' : `KES ${globalLimit.toLocaleString()}`;
             document.getElementById('overviewLimitStr').innerText = limitStr;
             
@@ -764,9 +776,8 @@
             
             if(!charts.overview) {
                 const remainColor = document.documentElement.classList.contains('dark') ? '#1e293b' : '#f7f2ea';
-                // If custom (null), just show solid orange for spend
                 let chartData = globalLimit === null ? [tExp, 0] : [tExp, (remain === '-' ? 0 : remain)];
-                if(globalLimit === null && tExp === 0) chartData = [0, 1]; // blank ring
+                if(globalLimit === null && tExp === 0) chartData = [0, 1];
                 
                 charts.overview = new Chart(document.getElementById('overviewChart').getContext('2d'), { type: 'doughnut', data: { labels: ['Spent', 'Remaining'], datasets: [{ data: chartData, backgroundColor: ['#ff7a1a', remainColor], borderWidth: 0, hoverOffset: 2 }] }, options: { cutout: '80%', plugins: { legend: { display: false }, tooltip: { enabled: false } }, animation: { duration: 1000 } } });
             } else { 
@@ -811,7 +822,6 @@
                 document.getElementById('viewAllCatsBtn').classList.toggle('hidden', sortedCats.length <= 5);
             }
 
-            // NEW: Exact timestamp sorting
             recent.sort((a,b) => new Date(b.Timestamp || b.Date) - new Date(a.Timestamp || a.Date));
             const rList = document.getElementById('homeTxList');
             if(recent.length === 0) { rList.innerHTML = '<p class="text-xs text-secondary opacity-50 dark:text-slate-400">No data.</p>'; }
@@ -832,7 +842,6 @@
                 rList.innerHTML = rHtml;
             }
 
-            // Swap Skeleton
             document.getElementById('overviewSkeleton').classList.add('hidden');
             document.getElementById('overviewData').classList.remove('hidden');
         }
@@ -844,8 +853,6 @@
             globalData.expenses.forEach(e => allTx.push({ ...e, type: 'Expense', totalAmt: parseFloat(e.Amount) + (parseFloat(e.TransactionFee)||0) }));
             
             allTx = allTx.filter(tx => { if(q && !`${tx.Category} ${tx.PaymentSource} ${tx.Notes} ${tx.Amount}`.toLowerCase().includes(q)) return false; return true; });
-            
-            // NEW: Exact timestamp sorting
             allTx.sort((a,b) => new Date(b.Timestamp || b.Date) - new Date(a.Timestamp || a.Date));
             
             const list = document.getElementById('fullTxList');
@@ -947,11 +954,8 @@
             btn.disabled = false; btn.innerHTML = 'Save Entry';
         }
 
-        // --- MESSAGES ---
         function checkUnreadMessages() {
             if(!globalData.messages) return;
-            
-            // NEW: If chat panel is currently open, never show badge
             if(document.getElementById('chatPanel').classList.contains('open')) {
                 document.getElementById('headerMsgBadge').classList.add('hidden');
                 document.getElementById('navMsgBadge').classList.add('hidden');
@@ -959,7 +963,6 @@
             }
 
             let u = 0; globalData.messages.forEach(m => { 
-                // NEW: Handle Google Sheets string "TRUE" vs actual boolean true
                 const isRead = m.ReadStatus === true || String(m.ReadStatus).toLowerCase() === 'true';
                 if (!isRead && String(m.FromUserID).trim() !== String(currentUser.userId).trim()) u++; 
             });
@@ -1011,7 +1014,6 @@
             fetchDataSilent(); 
         }
 
-        // --- PROFILE ---
         function updateProfileUI() {
             document.getElementById('editName').value = currentUser.name;
             const src = currentUser.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=ff7a1a&color=fff&bold=true`;
@@ -1044,7 +1046,6 @@
             btn.innerText = "Save Changes";
         }
 
-        // --- PDF PREVIEW & EXPORT ---
         function generateReportPreview() {
             const mFilter = document.getElementById('reportMonth').value;
             const now = new Date(); let start, end;
@@ -1067,7 +1068,6 @@
                 }
             });
             
-            // NEW: Exact timestamp sorting for PDF too
             allTx.sort((a,b) => new Date(b.Timestamp || b.Date) - new Date(a.Timestamp || a.Date));
             let html = '';
             if(allTx.length === 0) { html = `<tr><td colspan="4" class="text-center py-4 opacity-50" style="color:#1c2b5a;">No data for this period.</td></tr>`; }
