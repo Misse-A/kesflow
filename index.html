@@ -82,7 +82,7 @@
         <!-- HEADER -->
         <header class="text-secondary dark:text-white fixed top-0 w-full z-40 bg-primary/90 dark:bg-slate-900/90 backdrop-blur-md flex justify-between items-center px-6 py-4 transition-colors">
             <div class="flex items-center gap-3">
-                <button onclick="openPanel('burgerMenu')" class="text-secondary dark:text-white hover:text-accent transition text-xl mr-2"><i class="fa-solid fa-bars-staggered"></i></button>
+                <button onclick="openPanel('burgerMenu')" class="text-secondary dark:text-white hover:text-accent transition text-xl mr-2"><i class="fa-solid fa-bars"></i></button>
                 <img src="https://misse-a.github.io/kesflow/kesflow-logo.svg" alt="KESFlow Logo" class="w-8 h-8 object-contain" />
                 <h1 class="font-extrabold tracking-tight text-xl">KESFlow</h1>
             </div>
@@ -168,7 +168,7 @@
                             </div>
                         </div>
 
-                        <!-- NEW: In and Balance Row -->
+                        <!-- In and Balance Row -->
                         <div class="flex items-center gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-slate-700/50">
                             <div class="bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1.5 rounded-full text-[10px] font-bold border border-green-100 dark:border-green-800 flex items-center gap-1">
                                 <i class="fa-solid fa-arrow-down"></i> IN: <span id="overviewIncome">0</span>
@@ -264,11 +264,31 @@
             <button onclick="closePanel('burgerMenu')" class="text-secondary dark:text-white hover:text-accent mb-8"><i class="fa-solid fa-xmark text-2xl"></i></button>
             <h2 class="text-2xl font-extrabold tracking-tight text-secondary dark:text-white mb-8">Menu</h2>
             <div class="space-y-4">
-                <button onclick="switchView('Home'); closePanel('burgerMenu')" class="w-full text-left font-bold text-secondary dark:text-slate-300 text-lg hover:text-accent transition"><i class="fa-solid fa-house w-8 opacity-50"></i> Overview</button>
-                <button onclick="switchView('Transactions'); closePanel('burgerMenu')" class="w-full text-left font-bold text-secondary dark:text-slate-300 text-lg hover:text-accent transition"><i class="fa-solid fa-list-ul w-8 opacity-50"></i> Transactions</button>
-                <button onclick="switchView('Reports'); closePanel('burgerMenu')" class="w-full text-left font-bold text-secondary dark:text-slate-300 text-lg hover:text-accent transition"><i class="fa-solid fa-chart-pie w-8 opacity-50"></i> Reports</button>
-                <button onclick="fetchData(); closePanel('burgerMenu')" class="w-full text-left font-bold text-secondary dark:text-slate-300 text-lg hover:text-accent transition mt-4 pt-4 border-t border-gray-200 dark:border-slate-700"><i id="menuSyncIcon" class="fa-solid fa-rotate-right w-8 opacity-50"></i> Force Sync</button>
+                <button onclick="navigateFromMenu('Home')" class="w-full text-left font-bold text-secondary dark:text-slate-300 text-lg hover:text-accent transition"><i class="fa-solid fa-house w-8 opacity-50"></i> Overview</button>
+                <button onclick="navigateFromMenu('Transactions')" class="w-full text-left font-bold text-secondary dark:text-slate-300 text-lg hover:text-accent transition"><i class="fa-solid fa-list-ul w-8 opacity-50"></i> Transactions</button>
+                <button onclick="navigateFromMenu('Reports')" class="w-full text-left font-bold text-secondary dark:text-slate-300 text-lg hover:text-accent transition"><i class="fa-solid fa-chart-pie w-8 opacity-50"></i> Reports</button>
+                
+                <button onclick="swapPanel('categoriesPanel')" class="w-full text-left font-bold text-secondary dark:text-slate-300 text-lg hover:text-accent transition mt-4 pt-4 border-t border-gray-200 dark:border-slate-700"><i class="fa-solid fa-wand-magic-sparkles w-8 opacity-50"></i> Category rules</button>
+
+                <button onclick="forceSyncFromMenu()" class="w-full text-left font-bold text-secondary dark:text-slate-300 text-lg hover:text-accent transition mt-4 pt-4 border-t border-gray-200 dark:border-slate-700"><i id="menuSyncIcon" class="fa-solid fa-rotate-right w-8 opacity-50"></i> Force Sync</button>
             </div>
+        </div>
+    </div>
+
+    <!-- SMART RULES / CATEGORIES PANEL -->
+    <div id="categoriesPanel" class="panel w-full sm:w-md sm:border-r border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+        <div class="bg-primary dark:bg-slate-900 text-secondary dark:text-white p-6 pt-8 flex items-center gap-4 border-b border-gray-100 dark:border-slate-700">
+            <button onclick="closePanel('categoriesPanel')" class="hover:text-accent p-2"><i class="fa-solid fa-arrow-left text-xl"></i></button>
+            <h2 class="font-extrabold text-2xl flex-1 tracking-tight">Smart Rules</h2>
+        </div>
+        <div class="p-4 border-b border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 sticky top-0 z-10 shadow-sm">
+            <div class="flex items-center gap-2 bg-primary dark:bg-slate-700 rounded-full p-2 pl-4 border border-gray-200 dark:border-slate-600">
+                <i class="fa-solid fa-magnifying-glass text-secondary dark:text-slate-400 opacity-50"></i>
+                <input type="text" id="catSearchInput" onkeyup="filterCategoriesMenu()" placeholder="Search categories, items or triggers..." class="flex-1 bg-transparent py-2 text-sm outline-none font-medium text-secondary dark:text-white">
+            </div>
+        </div>
+        <div id="categoriesMenuList" class="flex-1 overflow-y-auto p-4 space-y-4">
+            <!-- Dynamic Content -->
         </div>
     </div>
 
@@ -394,13 +414,16 @@
         let currentUser = null; let globalData = { income: [], expenses: [], categories: [], messages: [], users: [], budgets: [] };
         let charts = {}; let syncInterval = null; let catsExpanded = false; let isLoggingIn = false;
         
+        // App State History Tracking
+        let appState = { view: 'Home', panel: null };
+
         Chart.defaults.font.family = "'Inter', sans-serif"; 
         Chart.defaults.color = document.documentElement.classList.contains('dark') ? '#f8fafc' : '#1c2b5a';
         const catIcons = { 'Groceries': 'fa-cart-shopping', 'Dining': 'fa-utensils', 'Transport': 'fa-bus', 'Entertainment': 'fa-ticket', 'Subscriptions': 'fa-wifi', 'Health': 'fa-notes-medical', 'Income': 'fa-wallet', 'House Utilities': 'fa-house-chimney', 'Food': 'fa-burger', 'Personal Care': 'fa-spa', 'Children Expenses': 'fa-child', 'Savings & Chama': 'fa-piggy-bank', 'Giving': 'fa-hand-holding-heart', 'Miscellaneous': 'fa-tags' };
         const catColors = ['#1c2b5a', '#ff7a1a', '#394d8f', '#ff9f57', '#5f75bf', '#ffc08f'];
 
         const smartRules = [
-            { cat: 'House Utilities', item: 'Rent & Waterbill', triggers: ['bertha njeri', 'rent', 'water', 'waterbill'] },
+            { cat: 'House Utilities', item: 'Rent & Waterbill', triggers: ['bertha njeri', 'Faith Kanana','rent', 'water', 'waterbill'] },
             { cat: 'House Utilities', item: 'Electricity', triggers: ['kplc', 'token', 'electricity', 'power'] },
             { cat: 'House Utilities', item: 'Cooking Gas', triggers: ['agnes wanjiku', 'gas', 'cooking gas'] },
             { cat: 'House Utilities', item: 'Subscriptions', triggers: ['netflix', 'safaricom home', 'prime', 'google one', 'wifi', 'internet', 'dstv'] },
@@ -415,7 +438,7 @@
             { cat: 'Personal Care', item: 'Salon & Nails', triggers: ['salon', 'nails', 'haircut', 'barber', 'spa', 'cosmetics'] },
             { cat: 'Savings & Chama', item: 'Chama', triggers: ['amka', 'christine', 'chama', 'contribution'] },
             { cat: 'Savings & Chama', item: 'Joint Account', triggers: ['equity', 'savings', 'bank'] },
-            { cat: 'Savings & Chama', item: 'Payout', triggers: ['faith kanana', 'payout'] },
+            { cat: 'Savings & Chama', item: 'Payout', triggers: ['amka', 'payout'] },
             { cat: 'Giving', item: 'Family', triggers: ['florence', 'samsom', 'parent', 'parents', 'mom', 'dad', 'giving', 'tithe', 'offering', 'harambee'] }
         ];
 
@@ -439,6 +462,62 @@
                 }
             });
         };
+
+        // --- HISTORY API HANDLING FOR BACK BUTTON ---
+        window.addEventListener('popstate', (e) => {
+            if(e.state) {
+                appState = e.state;
+
+                // Handle panels
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
+                if(appState.panel) {
+                    document.getElementById(appState.panel).classList.add('open');
+                } else {
+                    fetchDataSilent(); // Refresh data quietly when closing panels
+                }
+
+                // Handle views
+                if(appState.view) {
+                    document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
+                    const viewEl = document.getElementById('view' + appState.view);
+                    if(viewEl) viewEl.classList.remove('hidden');
+                    document.querySelectorAll('.nav-item').forEach(el => {
+                        if(el.dataset.target) el.classList.toggle('active', el.dataset.target === appState.view);
+                        else el.classList.remove('active');
+                    });
+                }
+            }
+        });
+
+        function navigateFromMenu(viewName) {
+            document.getElementById('burgerMenu').classList.remove('open');
+            appState.panel = null;
+            appState.view = viewName;
+            history.replaceState(appState, "");
+            
+            document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
+            document.getElementById('view' + viewName).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(el => {
+                if(el.dataset.target) el.classList.toggle('active', el.dataset.target === viewName);
+                else el.classList.remove('active');
+            });
+            window.scrollTo(0,0);
+            if(viewName === 'Transactions') refreshTransactionsView();
+            if(viewName === 'Reports') generateReportPreview();
+        }
+
+        function swapPanel(newId) {
+            document.querySelectorAll('.panel.open').forEach(p => p.classList.remove('open'));
+            document.getElementById(newId).classList.add('open');
+            if(newId === 'categoriesPanel') { document.getElementById('catSearchInput').value = ''; renderCategoriesMenu(); }
+            appState.panel = newId;
+            history.replaceState(appState, "");
+        }
+
+        function forceSyncFromMenu() {
+            fetchData();
+            closePanel('burgerMenu');
+        }
 
         function checkAutoLogin() {
             const pin = document.getElementById('pinInput').value;
@@ -523,17 +602,13 @@
         }
 
         function logout() {
-            currentUser = null; if (syncInterval) clearInterval(syncInterval);
-            localStorage.removeItem('sessionUser'); 
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
-            document.getElementById('appWrapper').classList.add('hidden');
-            document.getElementById('loginScreen').classList.remove('hidden'); 
-            document.getElementById('pinInput').value = '';
-            document.getElementById('bioAutoLoginMsg').classList.add('hidden'); 
-            document.getElementById('loginErrorMsg').classList.add('hidden'); 
+            localStorage.removeItem('sessionUser');
+            window.location.reload(); 
         }
 
-        function switchView(viewName) {
+        function switchView(viewName, pushHistory = true) {
+            if(appState.view === viewName && !appState.panel && pushHistory) return;
+
             document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
             document.getElementById('view' + viewName).classList.remove('hidden');
             document.querySelectorAll('.nav-item').forEach(el => {
@@ -543,6 +618,12 @@
             window.scrollTo(0,0);
             if(viewName === 'Transactions') refreshTransactionsView();
             if(viewName === 'Reports') generateReportPreview();
+
+            if (pushHistory) {
+                appState.view = viewName;
+                appState.panel = null;
+                history.pushState(appState, "");
+            }
         }
 
         function openPanel(id) { 
@@ -557,8 +638,19 @@
                 renderMessages(true); 
                 apiCall({ action: 'markMessagesRead', userId: currentUser.userId }); 
             }
+            if(id === 'categoriesPanel') {
+                document.getElementById('catSearchInput').value = '';
+                renderCategoriesMenu();
+            }
+
+            appState.panel = id;
+            history.pushState(appState, "");
         }
-        function closePanel(id) { document.getElementById(id).classList.remove('open'); if(id === 'chatPanel') fetchDataSilent(); }
+        
+        function closePanel(id) { 
+            // Delegate closure to hardware back tracking
+            history.back();
+        }
         
         function toggleSearch() { 
             const sb = document.getElementById('searchBarWrap'); sb.classList.toggle('hidden');
@@ -568,10 +660,18 @@
         function executeSearch() { refreshTransactionsView(); }
 
         function showDashboard() {
-            document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('appWrapper').classList.remove('hidden');
+            document.getElementById('loginScreen').classList.add('hidden'); 
+            document.getElementById('appWrapper').classList.remove('hidden');
+            
+            // Set base history state on load
+            appState = { view: 'Home', panel: null };
+            history.replaceState(appState, "");
+
             const greetings = ["Hello", "Welcome back", "Good to see you", "Hey there"];
             document.getElementById('welcomeGreeting').innerText = `${greetings[Math.floor(Math.random() * greetings.length)]}, ${currentUser.name.split(' ')[0]}`;
-            updateProfileUI(); switchView('Home'); fetchData();
+            updateProfileUI(); 
+            switchView('Home', false); 
+            fetchData();
             if (syncInterval) clearInterval(syncInterval); syncInterval = setInterval(fetchDataSilent, 8000); 
         }
 
@@ -610,6 +710,58 @@
                     if(document.getElementById('chatPanel').classList.contains('open')) renderMessages(); 
                 }
             } catch (e) {} 
+        }
+
+        // --- SMART RULES MENU LOGIC ---
+        function renderCategoriesMenu() {
+            const list = document.getElementById('categoriesMenuList');
+            const q = document.getElementById('catSearchInput').value.toLowerCase();
+
+            const grouped = {};
+            smartRules.forEach(rule => {
+                if (!grouped[rule.cat]) grouped[rule.cat] = [];
+                grouped[rule.cat].push(rule);
+            });
+
+            let html = '';
+            for (const cat in grouped) {
+                const rules = grouped[cat];
+                const filteredRules = rules.filter(r => {
+                    return cat.toLowerCase().includes(q) ||
+                           r.item.toLowerCase().includes(q) ||
+                           r.triggers.some(t => t.toLowerCase().includes(q));
+                });
+
+                if (filteredRules.length > 0) {
+                    const icon = catIcons[cat] || 'fa-tags';
+                    html += `
+                    <div class="bg-primary/50 dark:bg-slate-700/30 p-4 rounded-2xl border border-gray-100 dark:border-slate-700 mb-4 shadow-sm">
+                        <h3 class="font-bold text-secondary dark:text-white text-lg flex items-center gap-2 mb-3">
+                            <i class="fa-solid ${icon} text-accent"></i> ${cat}
+                        </h3>
+                        <div class="space-y-3">
+                    `;
+                    filteredRules.forEach(r => {
+                        html += `
+                            <div class="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm border border-gray-50 dark:border-slate-600">
+                                <p class="font-bold text-sm text-secondary dark:text-slate-100">${r.item}</p>
+                                <div class="mt-2 flex flex-wrap gap-1">
+                                    ${r.triggers.map(t => `<span class="bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 text-[10px] px-2 py-1 rounded-md font-bold uppercase tracking-wider">${t}</span>`).join('')}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += `</div></div>`;
+                }
+            }
+            if(html === '') {
+                html = '<div class="text-center py-10"><i class="fa-solid fa-magnifying-glass text-3xl opacity-20 mb-4 text-secondary dark:text-slate-400"></i><p class="text-sm font-semibold text-secondary dark:text-slate-400 opacity-60">No rules match your search.</p></div>';
+            }
+            list.innerHTML = html;
+        }
+
+        function filterCategoriesMenu() {
+            renderCategoriesMenu();
         }
 
         function getPeriodBoundaries(filterVal, isPrevious = false) {
@@ -694,7 +846,8 @@
 
             try {
                 await apiCall({ action: 'setBudgets', userId: currentUser.userId, month: targetMonth, budgets: payloads });
-                closePanel('budgetPanel'); fetchData();
+                history.back(); // close budget panel
+                fetchData();
             } catch(e) { alert("Failed to save budgets."); }
             btn.innerText = "Save Budgets";
         }
@@ -732,7 +885,6 @@
             document.getElementById('overviewSpent').innerText = `KES ${tExp.toLocaleString()}`;
             document.getElementById('overviewIncome').innerText = `${tInc.toLocaleString()}`;
             
-            // --- NEW: Calculate Balance ---
             const balanceVal = tInc - tExp;
             const balanceEl = document.getElementById('overviewBalance');
             balanceEl.innerText = `KES ${balanceVal.toLocaleString()}`;
@@ -949,7 +1101,7 @@
             e.preventDefault(); const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
             try {
                 const res = await apiCall({ action: 'addTransaction', userId: currentUser.userId, type: document.getElementById('txType').value, date: document.getElementById('txDate').value, amount: document.getElementById('txAmount').value, category: document.getElementById('txCategory').value, paymentSource: document.getElementById('txSource').value, transactionFee: document.getElementById('txFee').value, notes: document.getElementById('txNotes').value });
-                if (res.status === 'success') { document.getElementById('txForm').reset(); closePanel('entryPanel'); document.getElementById('ocrStatus').classList.add('hidden'); fetchData(); }
+                if (res.status === 'success') { document.getElementById('txForm').reset(); history.back(); document.getElementById('ocrStatus').classList.add('hidden'); fetchData(); }
             } catch (err) { alert('Failed.'); }
             btn.disabled = false; btn.innerHTML = 'Save Entry';
         }
@@ -1040,7 +1192,7 @@
             try {
                 await apiCall({ action: 'updateProfile', userId: currentUser.userId, name: newName, picUrl: newPic });
                 currentUser.name = newName; currentUser.profilePic = newPic; localStorage.setItem('sessionUser', JSON.stringify(currentUser));
-                updateProfileUI(); closePanel('profilePanel');
+                updateProfileUI(); history.back();
                 document.getElementById('welcomeGreeting').innerText = `Hello, ${currentUser.name.split(' ')[0]}`;
             } catch(e) { alert("Failed to save."); }
             btn.innerText = "Save Changes";
